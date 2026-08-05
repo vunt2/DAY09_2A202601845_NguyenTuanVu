@@ -1,11 +1,12 @@
 from typing import Dict, Any
 from src.agents.base_agent import BaseAgent
 from src.policy_engine import HandoffPacket
+from src.llm_client import LLMClient
 
 class CoordinatorAgent(BaseAgent):
     """
     Coordinator Agent: Receives customer dispute case, initializes HandoffPacket,
-    logs initiation trace, and hands off to Domain Agents.
+    invokes OpenRouter LLM API to analyze customer intent, logs trace, and dispatches to Domain Agents.
     """
 
     def __init__(self):
@@ -31,6 +32,13 @@ class CoordinatorAgent(BaseAgent):
             policy_version=policy_version
         )
         
+        # Real OpenRouter LLM API call if API key is present
+        llm_response = None
+        if LLMClient.is_api_key_set():
+            prompt = f"Analyze customer dispute intent for Case {case_id}, Order {claimed_order_id}: '{customer_msg}'."
+            sys_prompt = "You are CoordinatorAgent. Analyze customer request intent for e-commerce dispute resolution."
+            llm_response = LLMClient.call_openrouter(prompt=prompt, system_prompt=sys_prompt)
+        
         self.log_trace(
             case_id=case_id,
             step_num=1,
@@ -38,14 +46,15 @@ class CoordinatorAgent(BaseAgent):
             details={
                 "claimed_order_id": claimed_order_id,
                 "opened_at": opened_at,
-                "policy_version": policy_version
+                "policy_version": policy_version,
+                "llm_api_called": LLMClient.is_api_key_set(),
+                "llm_status": llm_response.get("status") if llm_response else "skipped"
             }
         )
         
         return packet
 
     def process(self, packet: HandoffPacket, step_num: int = 1) -> HandoffPacket:
-        # If passed directly through pipeline process
         self.log_trace(
             case_id=packet.case_id,
             step_num=step_num,

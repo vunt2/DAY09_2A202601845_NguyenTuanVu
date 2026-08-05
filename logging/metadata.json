@@ -6,6 +6,6 @@
   "execution_mode": "OPENROUTER_LLM_API",
   "api_key_present": true,
   "framework": "Python Native Multi-Agent Pipeline",
-  "runtime_seconds": 0.1044,
+  "runtime_seconds": 512.7027,
   "processed_cases": 50
 }
