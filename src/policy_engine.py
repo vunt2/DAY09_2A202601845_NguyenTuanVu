@@ -132,7 +132,7 @@ class PolicyEngine:
             refund = freight_total
             action = "refund_freight"
             case_status = "action_required"
-            confidence = 0.95
+            confidence = 0.92
 
         # Rule 4: late_delivery_logistics
         elif packet.late_carrier_delivery and not packet.seller_late_handoff:
@@ -143,7 +143,7 @@ class PolicyEngine:
             refund = freight_total
             action = "refund_freight"
             case_status = "action_required"
-            confidence = 0.95
+            confidence = 0.90
 
         # Rule 5: valid_split_payment
         elif packet.valid_split_payment_flag:
@@ -165,11 +165,10 @@ class PolicyEngine:
             refund = 0.0
             action = "reject_late_refund"
             case_status = "no_action"
-            confidence = 0.95
+            confidence = 0.90
 
-        # Build evidence IDs with HIGH PRIORITY to policy & order so they are NEVER truncated
+        # Build evidence IDs in Canonical README order: order -> items -> payments -> sellers -> policy
         evidences = []
-        evidences.append(f"policy:{root_cause_code}")
         if packet.order_exists:
             evidences.append(f"order:{oid}")
         for i_id in affected_item_ids:
@@ -179,8 +178,19 @@ class PolicyEngine:
         for s_id in affected_seller_ids:
             evidences.append(f"seller:{s_id}")
 
-        # Limit evidence IDs to max 10 while guaranteeing policy:TAG is present
-        evidences = list(dict.fromkeys(evidences))[:10]
+        policy_ev = f"policy:{root_cause_code}"
+
+        # Deduplicate middle elements while preserving order
+        evidences = list(dict.fromkeys(evidences))
+
+        # Ensure policy tag is included, and total length <= 10
+        if policy_ev not in evidences:
+            if len(evidences) >= 10:
+                evidences = evidences[:9] + [policy_ev]
+            else:
+                evidences.append(policy_ev)
+        else:
+            evidences = evidences[:10]
 
         # Responsible parties
         resp_parties = []

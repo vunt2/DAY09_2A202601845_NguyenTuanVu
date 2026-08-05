@@ -30,12 +30,12 @@
     "responsible_parties": []
   },
   "evidence_ids": [
-    "policy:MULTIPLE_PAYMENTS_RECONCILED",
     "order:b93b079468bdf6a20fd54cf45d1e03b6",
     "item:b93b079468bdf6a20fd54cf45d1e03b6:1",
     "payment:b93b079468bdf6a20fd54cf45d1e03b6:2",
     "payment:b93b079468bdf6a20fd54cf45d1e03b6:1",
-    "seller:cc419e0650a3c5ba77189a1882b7556a"
+    "seller:cc419e0650a3c5ba77189a1882b7556a",
+    "policy:MULTIPLE_PAYMENTS_RECONCILED"
   ],
   "financial_resolution": {
     "currency": "BRL",
