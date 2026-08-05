@@ -1,11 +1,11 @@
 {
   "cohort": "K3",
   "policy_version": "EC_POLICY_V1",
-  "model": "qwen/qwen-2.5-7b-instruct:free",
-  "parameter_size": "10B",
+  "model": "openai/gpt-4o-mini",
+  "parameter_size": "8B",
   "execution_mode": "OPENROUTER_LLM_API",
   "api_key_present": true,
   "framework": "Python Native Multi-Agent Pipeline",
-  "runtime_seconds": 0.0935,
+  "runtime_seconds": 0.0905,
   "processed_cases": 50
 }

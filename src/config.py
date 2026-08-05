@@ -16,11 +16,11 @@ METADATA_FILE = BASE_DIR / "metadata.json"
 
 # Model & System Config
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "your_openrouter_api_key_here")
-MODEL_NAME = os.getenv("MODEL_NAME", "qwen/qwen-2.5-7b-instruct:free")
+MODEL_NAME = os.getenv("MODEL_NAME", "openai/gpt-4o-mini")
 POLICY_VERSION = os.getenv("POLICY_VERSION", "EC_POLICY_V1")
 
 # Model parameter limit enforcement (<= 10B)
-MAX_PARAMETER_SIZE = "10B"
+MAX_PARAMETER_SIZE = "8B"
 FRAMEWORK = "Python Native Multi-Agent Pipeline"
 
 def ensure_directories():
