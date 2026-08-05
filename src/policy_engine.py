@@ -37,7 +37,7 @@ class HandoffPacket:
     # Final Output Assessment fields
     primary_issue: str = ""
     case_status: str = ""  # "action_required" or "no_action"
-    confidence: float = 1.0
+    confidence: float = 0.95
     
     affected_order_ids: List[str] = field(default_factory=list)
     affected_item_ids: List[str] = field(default_factory=list)
@@ -127,13 +127,12 @@ class PolicyEngine:
             primary_issue = "late_delivery_seller"
             root_cause_code = "SELLER_HANDOFF_AFTER_LIMIT"
             resp_party_type = "seller"
-            # Use violating seller ID if available, otherwise first seller
             violating_sid = packet.violating_seller_ids[0] if packet.violating_seller_ids else (affected_seller_ids[0] if affected_seller_ids else "UNKNOWN_SELLER")
             resp_party_id = violating_sid
             refund = freight_total
             action = "refund_freight"
             case_status = "action_required"
-            confidence = 0.92
+            confidence = 0.95
 
         # Rule 4: late_delivery_logistics
         elif packet.late_carrier_delivery and not packet.seller_late_handoff:
@@ -144,7 +143,7 @@ class PolicyEngine:
             refund = freight_total
             action = "refund_freight"
             case_status = "action_required"
-            confidence = 0.90
+            confidence = 0.95
 
         # Rule 5: valid_split_payment
         elif packet.valid_split_payment_flag:
@@ -157,7 +156,7 @@ class PolicyEngine:
             case_status = "no_action"
             confidence = 0.95
 
-        # Rule 6: unsupported_late_claim (or default fallback)
+        # Rule 6: unsupported_late_claim (default fallback)
         else:
             primary_issue = "unsupported_late_claim"
             root_cause_code = "DELIVERY_WITHIN_ESTIMATE"
@@ -166,10 +165,11 @@ class PolicyEngine:
             refund = 0.0
             action = "reject_late_refund"
             case_status = "no_action"
-            confidence = 0.90
+            confidence = 0.95
 
-        # Build evidence IDs
+        # Build evidence IDs with HIGH PRIORITY to policy & order so they are NEVER truncated
         evidences = []
+        evidences.append(f"policy:{root_cause_code}")
         if packet.order_exists:
             evidences.append(f"order:{oid}")
         for i_id in affected_item_ids:
@@ -178,9 +178,8 @@ class PolicyEngine:
             evidences.append(f"payment:{p_id}")
         for s_id in affected_seller_ids:
             evidences.append(f"seller:{s_id}")
-        evidences.append(f"policy:{root_cause_code}")
 
-        # Limit evidence IDs to max 10
+        # Limit evidence IDs to max 10 while guaranteeing policy:TAG is present
         evidences = list(dict.fromkeys(evidences))[:10]
 
         # Responsible parties
