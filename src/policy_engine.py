@@ -164,30 +164,27 @@ class PolicyEngine:
             action = "reject_late_refund"
             case_status = "no_action"
 
-        # Build evidence IDs in Canonical README order: order -> items -> payments -> sellers -> policy
+        # Build evidence IDs targeted precisely per issue: order -> items -> payments -> sellers (only if seller issue) -> policy
         evidences = []
         if packet.order_exists:
             evidences.append(f"order:{oid}")
+
         for i_id in affected_item_ids:
             evidences.append(f"item:{i_id}")
+
         for p_id in affected_payment_ids:
             evidences.append(f"payment:{p_id}")
-        for s_id in affected_seller_ids:
-            evidences.append(f"seller:{s_id}")
 
-        policy_ev = f"policy:{root_cause_code}"
+        # Include seller evidence tag ONLY when seller is involved in late_delivery_seller
+        if primary_issue == "late_delivery_seller":
+            for s_id in affected_seller_ids:
+                evidences.append(f"seller:{s_id}")
 
-        # Deduplicate middle elements while preserving order
-        evidences = list(dict.fromkeys(evidences))
+        # Always include policy tag at canonical end position
+        evidences.append(f"policy:{root_cause_code}")
 
-        # Ensure policy tag is included, and total length <= 10
-        if policy_ev not in evidences:
-            if len(evidences) >= 10:
-                evidences = evidences[:9] + [policy_ev]
-            else:
-                evidences.append(policy_ev)
-        else:
-            evidences = evidences[:10]
+        # Deduplicate while preserving canonical order
+        evidences = list(dict.fromkeys(evidences))[:10]
 
         # Responsible parties
         resp_parties = []
