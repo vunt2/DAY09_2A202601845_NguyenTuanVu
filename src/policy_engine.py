@@ -37,7 +37,7 @@ class HandoffPacket:
     # Final Output Assessment fields
     primary_issue: str = ""
     case_status: str = ""  # "action_required" or "no_action"
-    confidence: float = 0.95
+    confidence: float = 1.0
     
     affected_order_ids: List[str] = field(default_factory=list)
     affected_item_ids: List[str] = field(default_factory=list)
@@ -98,6 +98,9 @@ class PolicyEngine:
         affected_seller_ids = affected_seller_ids[:5]
         affected_payment_ids = affected_payment_ids[:5]
 
+        # Standardize confidence to 1.0 for deterministic rule engine decisions
+        confidence = 1.0
+
         # Evaluate rules in strict priority order (1 to 6)
         
         # Rule 1: canceled_order_paid
@@ -109,7 +112,6 @@ class PolicyEngine:
             refund = payment_total
             action = "issue_full_refund"
             case_status = "action_required"
-            confidence = 0.95
 
         # Rule 2: unavailable_order_paid
         elif packet.order_status == "unavailable" and payment_total > 0:
@@ -120,7 +122,6 @@ class PolicyEngine:
             refund = payment_total
             action = "issue_full_refund"
             case_status = "action_required"
-            confidence = 0.95
 
         # Rule 3: late_delivery_seller
         elif packet.late_carrier_delivery and packet.seller_late_handoff:
@@ -132,7 +133,6 @@ class PolicyEngine:
             refund = freight_total
             action = "refund_freight"
             case_status = "action_required"
-            confidence = 0.92
 
         # Rule 4: late_delivery_logistics
         elif packet.late_carrier_delivery and not packet.seller_late_handoff:
@@ -143,7 +143,6 @@ class PolicyEngine:
             refund = freight_total
             action = "refund_freight"
             case_status = "action_required"
-            confidence = 0.90
 
         # Rule 5: valid_split_payment
         elif packet.valid_split_payment_flag:
@@ -154,7 +153,6 @@ class PolicyEngine:
             refund = 0.0
             action = "explain_valid_split_payment"
             case_status = "no_action"
-            confidence = 0.95
 
         # Rule 6: unsupported_late_claim (default fallback)
         else:
@@ -165,7 +163,6 @@ class PolicyEngine:
             refund = 0.0
             action = "reject_late_refund"
             case_status = "no_action"
-            confidence = 0.90
 
         # Build evidence IDs in Canonical README order: order -> items -> payments -> sellers -> policy
         evidences = []
@@ -200,7 +197,7 @@ class PolicyEngine:
         # Update packet
         packet.primary_issue = primary_issue
         packet.case_status = case_status
-        packet.confidence = round(confidence, 2)
+        packet.confidence = float(confidence)
         
         packet.affected_order_ids = affected_order_ids
         packet.affected_item_ids = affected_item_ids
